@@ -10,7 +10,13 @@ export class RestaurantEntity extends CommonEntity {
   @Column()
   name: string;
 
-  @Column()
+  @Column({
+    name: 'cash_balance',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    default: 0,
+  })
   cashBalance: number;
 
   @OneToMany(() => RestaurantMenuEntity, (menus) => menus.restaurant, {

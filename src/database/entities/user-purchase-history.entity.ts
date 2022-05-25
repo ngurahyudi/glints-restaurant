@@ -3,14 +3,17 @@ import { CommonEntity, UserEntity, RestaurantMenuEntity } from '.';
 
 @Entity({ name: 'user_purchase_histories' })
 export class UserPurchaseHistoryEntity extends CommonEntity {
-  @Column()
-  name: string;
-
-  @Column()
-  price: number;
+  @Column({
+    name: 'transaction_amount',
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    default: 0,
+  })
+  transactionAmount: number;
 
   @Column({ name: 'user_id' })
-  restaurantId: number;
+  userId: number;
   @ManyToOne(() => UserEntity, (user) => user.purchaseHistories)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;

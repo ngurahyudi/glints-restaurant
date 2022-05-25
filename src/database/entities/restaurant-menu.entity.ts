@@ -6,7 +6,12 @@ export class RestaurantMenuEntity extends CommonEntity {
   @Column()
   name: string;
 
-  @Column({ nullable: false, default: 0 })
+  @Column({
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    default: 0,
+  })
   price: number;
 
   @Column({ name: 'restaurant_id' })
