@@ -38,5 +38,7 @@ lerna-debug.log*
 .env
 ormconfig.json
 
+.eslintcache
+
 /notes
 /data
