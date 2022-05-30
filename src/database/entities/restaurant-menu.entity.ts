@@ -3,7 +3,7 @@ import { CommonEntity, RestaurantEntity, UserPurchaseHistoryEntity } from './';
 
 @Entity({ name: 'restaurant_menus' })
 export class RestaurantMenuEntity extends CommonEntity {
-  @Column()
+  @Column({ length: 500 })
   name: string;
 
   @Column({

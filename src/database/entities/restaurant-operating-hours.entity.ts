@@ -1,4 +1,4 @@
-import { DaysEnum } from 'src/common/enums/days.enum';
+import { DaysEnum } from '../../common/enums/days.enum';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { CommonEntity, RestaurantEntity } from './';
 

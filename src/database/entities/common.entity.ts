@@ -13,7 +13,7 @@ export class CommonEntity extends BaseEntity {
   __entity?: string;
 
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
