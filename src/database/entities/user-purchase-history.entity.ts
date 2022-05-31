@@ -12,6 +12,9 @@ export class UserPurchaseHistoryEntity extends CommonEntity {
   })
   transactionAmount: number;
 
+  @Column({ name: 'transaction_date', default: () => 'NOW()' })
+  transactionDate: Date;
+
   @Column({ name: 'user_id' })
   userId: number;
   @ManyToOne(() => UserEntity, (user) => user.purchaseHistories)
