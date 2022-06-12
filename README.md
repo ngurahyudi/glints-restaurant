@@ -33,3 +33,5 @@ $ yarn seed:run
 
 $ yarn start:dev
 ```
+
+- Swagger: http://localhost:3000/docs
