@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Seeder } from 'typeorm-seeding';
 import * as moment from 'moment';
-import { RestaurantType } from '../../common/types';
+import { RestaurantLoadType } from '../../common/types';
 import {
   RestaurantDto,
   RestaurantMenuDto,
@@ -22,7 +22,7 @@ export default class RestaurantSeed implements Seeder {
       'https://gist.githubusercontent.com/seahyc/b9ebbe264f8633a1bf167cc6a90d4b57/raw/021d2e0d2c56217bad524119d1c31419b2938505/restaurant_with_menu.json',
     );
 
-    const data: RestaurantType[] = request.data;
+    const data: RestaurantLoadType[] = request.data;
 
     const restaurants: RestaurantDto[] = [];
 

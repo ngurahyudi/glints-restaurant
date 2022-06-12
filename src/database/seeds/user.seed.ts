@@ -3,7 +3,7 @@ import { getRepository } from 'typeorm';
 import { Seeder } from 'typeorm-seeding';
 import * as moment from 'moment';
 import { RestaurantMenuEntity, UserEntity } from '../entities';
-import { UserType } from '../../common/types';
+import { UserLoadType } from '../../common/types';
 import { UserDto, UserPurchaseHistoryDto } from '../../common/dto';
 import { proper } from '../../common/helpers';
 
@@ -19,7 +19,7 @@ export default class UserSeed implements Seeder {
       'https://gist.githubusercontent.com/seahyc/de33162db680c3d595e955752178d57d/raw/785007bc91c543f847b87d705499e86e16961379/users_with_purchase_history.json',
     );
 
-    const data: UserType[] = request.data;
+    const data: UserLoadType[] = request.data;
 
     const users: UserDto[] = [];
 
@@ -45,18 +45,12 @@ export default class UserSeed implements Seeder {
               'YYYY-MM-DD HH:mm:ss',
             ),
           ),
+          restaurantId: menu.restaurantId,
           menuId: menu.id,
         };
 
         histories.push(history);
       }
-
-      //   const user: UserDto = {
-      //     id: usr.id,
-      //     name: proper(usr.name),
-      //     cashBalance: usr.cashBalance,
-      //     purchaseHistories: histories,
-      //   };
 
       const user = new UserDto();
       user.id = usr.id;
