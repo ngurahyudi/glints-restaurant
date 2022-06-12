@@ -42,3 +42,5 @@ ormconfig.json
 
 /notes
 /data
+/db_data_docker
+/src/database/json/
