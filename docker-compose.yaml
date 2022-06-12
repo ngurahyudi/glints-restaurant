@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  restaurant-mysql:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - ${DATABASE_PORT}:3306
+    volumes:
+      - ./db_data_docker:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USERNAME}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+    cap_add:
+      - SYS_NICE # CAP_SYS_NICE
+
+  restaurant-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      - restaurant-mysql
