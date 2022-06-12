@@ -10,7 +10,9 @@ import databaseConfig from './configs/database.config';
 
 import { TypeOrmConfigService } from './database/typeorm-config.service';
 import { RestaurantModule } from './restaurant/restaurant.module';
-import { RestaurantMenuModule } from './restaurant-menu/restaurant-menu.module';
+import { UserModule } from './user/user.module';
+import { OrderModule } from './order/order.module';
+import { UserPurchaseHistoryModule } from './user-purchase-history/user-purchase-history.module';
 
 @Module({
   imports: [
@@ -23,7 +25,9 @@ import { RestaurantMenuModule } from './restaurant-menu/restaurant-menu.module';
       useClass: TypeOrmConfigService,
     }),
     RestaurantModule,
-    RestaurantMenuModule,
+    UserModule,
+    OrderModule,
+    UserPurchaseHistoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
