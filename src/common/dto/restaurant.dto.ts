@@ -7,7 +7,11 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { RestaurantMenuDto, RestaurantOperatingHoursDto } from '.';
+import {
+  RestaurantMenuDto,
+  RestaurantOperatingHoursDto,
+  UserPurchaseHistoryDto,
+} from '.';
 
 export class RestaurantDto {
   @IsNumber()
@@ -22,9 +26,14 @@ export class RestaurantDto {
 
   @Type(() => RestaurantOperatingHoursDto)
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   operatingHours: RestaurantOperatingHoursDto[];
+
+  @Type(() => UserPurchaseHistoryDto)
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  purchaseHistories: UserPurchaseHistoryDto[];
 
   @Type(() => RestaurantMenuDto)
   @IsArray()

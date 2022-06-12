@@ -10,11 +10,15 @@ export class UserPurchaseHistoryDto {
   transactionAmount: number;
 
   @IsDateString()
-  transactionDate: Date;
+  transactionDate?: Date;
 
   @IsNumber()
   @IsOptional()
   userId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  restaurantId?: number;
 
   @IsNumber()
   @IsNotEmpty()
