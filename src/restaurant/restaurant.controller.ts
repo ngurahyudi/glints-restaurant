@@ -7,10 +7,11 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { MoreLessEnum, OperatorEnum, SortEnum } from '../common/enums';
 import { RestaurantService } from './restaurant.service';
 
+@ApiTags('Restaurant')
 @Controller('restaurant')
 export class RestaurantController {
   constructor(private readonly restaurantService: RestaurantService) {}
