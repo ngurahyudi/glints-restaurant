@@ -1,4 +1,4 @@
-export type UserPurchaseHistoryType = {
+export type UserPurchaseHistoryLoadType = {
   dishName: string;
   restaurantName: string;
   transactionAmount: string;
