@@ -3,14 +3,14 @@ import {
   InternalServerErrorException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, getManager, Repository } from 'typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import * as moment from 'moment';
 import { RestaurantEntity, RestaurantMenuEntity } from '../database/entities';
 import { DaysEnum, MoreLessEnum } from '../common/enums';
-import { IDataTable } from '../common/interfaces';
 import { selectQuery } from '../common/helpers';
-import { DishesByPriceType, RestaurantType } from '../common/types';
+import { DishesByPriceType, RestaurantType, SearchType } from '../common/types';
+import { ListRestaurantByDateTimeDto, UpdateBalanceDto } from '../common/dto';
 
 @Injectable()
 export class RestaurantService {
@@ -19,48 +19,41 @@ export class RestaurantService {
     private readonly restaurantRepository: Repository<RestaurantEntity>,
     @InjectRepository(RestaurantMenuEntity)
     private readonly restaurantMenuRepository: Repository<RestaurantMenuEntity>,
+    @InjectEntityManager() private manager: EntityManager,
   ) {}
 
   /**
-   * It updates the cash balance of a restaurant by adding the total amount of the order to the current
-   * cash balance
-   * @param {number} restaurantId - number,
-   * @param {number} totalAmount - The amount to be added to the balance.
-   * @param {EntityManager} entityManager - This is the entity manager that is used to perform the
-   * database operations.
-   * @returns The restaurant entity with the updated cash balance.
+   * It updates the cash balance of a restaurant by adding the total amount of an order to it
+   * @param {UpdateBalanceDto} params - UpdateBalanceDto
    */
-  async updateBalance(
-    restaurantId: number,
-    totalAmount: number,
-    entityManager: EntityManager,
-  ): Promise<void> {
+  async updateBalance(params: UpdateBalanceDto): Promise<void> {
+    const { id, totalAmount, entityManager } = params;
+
     const restaurant = await entityManager
       .createQueryBuilder(RestaurantEntity, 'restaurant')
       .addSelect('restaurant.cashBalance')
       .setLock('pessimistic_read')
-      .where({ id: restaurantId })
+      .where({ id })
       .getOne();
 
     if (!restaurant)
       throw new UnprocessableEntityException('restaurantNotFound');
 
-    await entityManager.update(RestaurantEntity, restaurantId, {
+    await entityManager.update(RestaurantEntity, id, {
       cashBalance: restaurant.cashBalance + totalAmount,
     });
   }
 
   /**
    * It returns a list of restaurants that are open at a given date and time
-   * @param {string} dateTime - string - the date and time to check if the restaurant is open
-   * @param {IDataTable} dataTableOptions - IDataTable
-   * @returns An array of restaurants and the count of restaurants.
+   * @param {ListRestaurantByDateTimeDto} queryParams - ListRestaurantByDateTimeDto
+   * @returns an array of two elements. The first element is an array of RestaurantType objects. The
+   * second element is the number of records.
    */
   async listByDateTime(
-    dateTime: string,
-    dataTableOptions: IDataTable,
+    queryParams: ListRestaurantByDateTimeDto,
   ): Promise<[RestaurantType[], number]> {
-    const dt = moment(dateTime);
+    const dt = moment(queryParams.dateTime);
 
     if (!dt.isValid()) {
       throw new UnprocessableEntityException('invalidDateTime');
@@ -84,23 +77,25 @@ export class RestaurantService {
         .andWhere(':time >= operatingHours.openTime', { time })
         .andWhere(':time < operatingHours.closeTime', { time });
 
-      if (dataTableOptions.filterBy) {
+      if (queryParams.dataTableOptions.filterBy) {
         query = selectQuery(
           query,
-          dataTableOptions.filterOperator,
-          dataTableOptions.filterBy,
-          dataTableOptions.filterValue,
+          queryParams.dataTableOptions.filterOperator,
+          queryParams.dataTableOptions.filterBy,
+          queryParams.dataTableOptions.filterValue,
         );
       }
 
-      const skip = dataTableOptions.pageSize * dataTableOptions.pageIndex || 0;
+      const skip =
+        queryParams.dataTableOptions.pageSize *
+          queryParams.dataTableOptions.pageIndex || 0;
 
       const result = await query
         .skip(skip)
-        .take(dataTableOptions.pageSize)
+        .take(queryParams.dataTableOptions.pageSize)
         .orderBy(
-          `restaurant.${dataTableOptions.sortBy}`,
-          dataTableOptions.sortOrder,
+          `restaurant.${queryParams.dataTableOptions.sortBy}`,
+          queryParams.dataTableOptions.sortOrder,
         )
         .select('restaurant')
         .getManyAndCount();
@@ -179,7 +174,9 @@ export class RestaurantService {
    * @param {string} keyword - string - The keyword to search for.
    * @returns An array of objects with a name property.
    */
-  async filterRestaurantsAndDishesByName(keyword: string): Promise<any> {
+  async filterRestaurantsAndDishesByName(
+    keyword: string,
+  ): Promise<SearchType[]> {
     const restaurantQry = this.restaurantRepository
       .createQueryBuilder('restaurant')
       .select('restaurant.name', 'name')
@@ -193,7 +190,7 @@ export class RestaurantService {
       .getQuery();
 
     try {
-      return await getManager().query(`${restaurantQry} UNION ${dishQry}`);
+      return await this.manager.query(`${restaurantQry} UNION ${dishQry}`);
     } catch (error) {
       throw new InternalServerErrorException();
     }
