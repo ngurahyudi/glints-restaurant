@@ -5,3 +5,5 @@ export * from './user.dto';
 export * from './user-purchase-history.dto';
 export * from './order.dto';
 export * from './order-menu.dto';
+export * from './list-restaurant-by-datetime.dto';
+export * from './update-balance.dto';
