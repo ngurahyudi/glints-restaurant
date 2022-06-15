@@ -365,13 +365,13 @@ describe('RestaurantService', () => {
           );
         });
 
-        test('it should create createQueryBuilder of restaurantRepository', () => {
+        test('then it should create createQueryBuilder of restaurantRepository', () => {
           expect(restaurantRepository.createQueryBuilder).toHaveBeenCalledTimes(
             2,
           );
         });
 
-        test('it should create createQueryBuilder of restaurantMenuRepository', () => {
+        test('then it should create createQueryBuilder of restaurantMenuRepository', () => {
           expect(
             restaurantMenuRepository.createQueryBuilder,
           ).toHaveBeenCalledTimes(2);
