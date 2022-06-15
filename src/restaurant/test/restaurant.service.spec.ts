@@ -1,34 +1,44 @@
-// import * as typeorm from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getEntityManagerToken, getRepositoryToken } from '@nestjs/typeorm';
 import {
   RestaurantEntity,
   RestaurantMenuEntity,
 } from '../../database/entities';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { MoreLessEnum, OperatorEnum, SortEnum } from '../../common/enums';
-import { DishesByPriceType, RestaurantType } from '../../common/types';
+import {
+  DishesByPriceType,
+  RestaurantType,
+  SearchType,
+} from '../../common/types';
 import { RestaurantService } from '../restaurant.service';
-import { dishByPriceStub, restaurantStub } from './stub';
+import { dishByPriceStub, restaurantStub, searchStub } from './stub';
 import { UnprocessableEntityException } from '@nestjs/common';
-import { IDataTable } from 'src/common/interfaces';
+import { IDataTable } from '../../common/interfaces';
 import { createMock } from '@golevelup/ts-jest';
+import {
+  ListRestaurantByDateTimeDto,
+  UpdateBalanceDto,
+} from '../../common/dto';
 
-// jest.mock('../restaurant.service.ts');
-
-// type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+type MockType<T> = {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  [P in keyof T]?: jest.Mock<{}>;
+};
 
 describe('RestaurantService', () => {
   let restaurantService: RestaurantService;
 
   let restaurantRepository: Repository<RestaurantEntity>;
   let restaurantMenuRepository: Repository<RestaurantMenuEntity>;
+  let mockManager: MockType<EntityManager>;
 
   const RESTAURANT_REPOSITORY_TOKEN = getRepositoryToken(RestaurantEntity);
   const RESTAURANT_MENU_REPOSITORY_TOKEN =
     getRepositoryToken(RestaurantMenuEntity);
+  const ENTITY_MANAGER_TOKEN = getEntityManagerToken();
 
-  const mockRepository = jest.fn(() => ({
+  const mockRepository = {
     create: () => jest.fn(),
     save: async () => jest.fn(),
     dispose: async () => jest.fn(),
@@ -51,7 +61,23 @@ describe('RestaurantService', () => {
       getManyAndCount: jest.fn().mockReturnValue([[restaurantStub()], 5]),
       getRawMany: jest.fn().mockReturnValue([dishByPriceStub()]),
     }),
-  }))();
+  };
+
+  const mockEntityManager = {
+    query: jest.fn(),
+    getCustomRepository: jest.fn(
+      (fn) =>
+        mockEntityManager[fn] ||
+        (mockEntityManager[fn] = createMock<typeof fn>()),
+    ),
+    update: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue({
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      setLock: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockReturnThis(),
+    }),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -65,6 +91,10 @@ describe('RestaurantService', () => {
           provide: RESTAURANT_MENU_REPOSITORY_TOKEN,
           useValue: mockRepository,
         },
+        {
+          provide: ENTITY_MANAGER_TOKEN,
+          useValue: mockEntityManager,
+        },
       ],
     }).compile();
 
@@ -77,6 +107,8 @@ describe('RestaurantService', () => {
     restaurantMenuRepository = module.get<Repository<RestaurantMenuEntity>>(
       RESTAURANT_MENU_REPOSITORY_TOKEN,
     );
+
+    mockManager = module.get(ENTITY_MANAGER_TOKEN);
 
     jest.clearAllMocks();
   });
@@ -117,13 +149,15 @@ describe('RestaurantService', () => {
           pageSize: 10,
         };
 
+        let qryParams: ListRestaurantByDateTimeDto = {
+          dateTime: validDate,
+          dataTableOptions: dataTableParams,
+        };
+
         let result: [RestaurantType[], number];
 
         beforeEach(async () => {
-          result = await restaurantService.listByDateTime(
-            validDate,
-            dataTableParams,
-          );
+          result = await restaurantService.listByDateTime(qryParams);
         });
 
         test('then it should call createQueryBuilder', async () => {
@@ -161,11 +195,6 @@ describe('RestaurantService', () => {
         });
 
         test('then it should list restaurant availability by date time', async () => {
-          jest.spyOn(
-            restaurantRepository.createQueryBuilder(),
-            'getManyAndCount',
-          );
-
           expect(
             restaurantRepository.createQueryBuilder().getManyAndCount,
           ).toHaveBeenCalled();
@@ -174,11 +203,13 @@ describe('RestaurantService', () => {
         });
 
         test('then it should throw an exception when invalid date time is given as parameter', async () => {
+          qryParams = {
+            dateTime: invalidDate,
+            ...qryParams,
+          };
+
           try {
-            await restaurantService.listByDateTime(
-              invalidDate,
-              dataTableParams,
-            );
+            await restaurantService.listByDateTime(qryParams);
           } catch (error) {
             expect(error).toBeInstanceOf(UnprocessableEntityException);
             expect(error.message).toBe('invalidDateTime');
@@ -256,8 +287,6 @@ describe('RestaurantService', () => {
         });
 
         test('then it should list restaurant by price range', async () => {
-          jest.spyOn(restaurantRepository.createQueryBuilder(), 'getRawMany');
-
           expect(
             restaurantRepository.createQueryBuilder().getRawMany,
           ).toHaveBeenCalled();
@@ -273,39 +302,14 @@ describe('RestaurantService', () => {
       });
 
       describe('when updateBalance is called', () => {
-        const mockEntityManager = {
-          getCustomRepository: jest.fn(
-            (fn) =>
-              mockEntityManager[fn] ||
-              (mockEntityManager[fn] = createMock<typeof fn>()),
-          ),
-          create: jest.fn(),
-          save: jest.fn(),
-          update: jest.fn(),
-          createQueryBuilder: jest.fn().mockReturnValue({
-            addSelect: jest.fn().mockReturnThis(),
-            where: jest.fn().mockReturnThis(),
-            setLock: jest.fn().mockReturnThis(),
-            getOne: jest
-              .fn()
-              .mockReturnValueOnce(restaurantStub())
-              .mockReturnValueOnce(undefined)
-              .mockReturnValueOnce(restaurantStub()),
-          }),
-        };
-
-        const params = {
-          restaurantId: 10,
+        const params: UpdateBalanceDto = {
+          id: 10,
           totalAmount: 100.0,
           entityManager: mockEntityManager,
         };
 
         test('then it should call createQueryBuilder', async () => {
-          await restaurantService.updateBalance(
-            params.restaurantId,
-            params.totalAmount,
-            params.entityManager,
-          );
+          await restaurantService.updateBalance(params);
 
           expect(params.entityManager.createQueryBuilder).toHaveBeenCalledTimes(
             1,
@@ -325,12 +329,12 @@ describe('RestaurantService', () => {
         });
 
         test('then it should thrown exception when restaurant data not found', async () => {
+          jest
+            .spyOn(params.entityManager.createQueryBuilder(), 'getOne')
+            .mockResolvedValue(undefined);
+
           try {
-            await restaurantService.updateBalance(
-              params.restaurantId,
-              params.totalAmount,
-              params.entityManager,
-            );
+            await restaurantService.updateBalance(params);
           } catch (error) {
             expect(error).toBeInstanceOf(UnprocessableEntityException);
             expect(error.message).toBe('restaurantNotFound');
@@ -338,51 +342,46 @@ describe('RestaurantService', () => {
         });
 
         test('then it should update restaurant balance', async () => {
-          await restaurantService.updateBalance(
-            params.restaurantId,
-            params.totalAmount,
-            params.entityManager,
-          );
+          jest
+            .spyOn(params.entityManager.createQueryBuilder(), 'getOne')
+            .mockResolvedValue(restaurantStub());
+
+          await restaurantService.updateBalance(params);
 
           expect(params.entityManager.update).toHaveBeenCalledTimes(1);
         });
       });
     });
 
-    // describe('filterRestaurantsAndDishesByName', () => {
-    //   describe('when filterRestaurantsAndDishesByName is called', () => {
-    //     // const deleteMock = jest.fn();
-    //     // jest.mock('typeorm', () => ({
-    //     //   getManager: () => ({
-    //     //     delete: deleteMock,
-    //     //   }),
-    //     // }));
+    describe('filterRestaurantsAndDishesByName', () => {
+      describe('when filterRestaurantsAndDishesByName is called', () => {
+        let result: SearchType[];
 
-    //     jest.mock('typeorm');
+        beforeEach(async () => {
+          jest.spyOn(mockManager, 'query').mockReturnValue([searchStub()]);
 
-    //     beforeEach(async () => {
-    //       await restaurantService.filterRestaurantsAndDishesByName(
-    //         'some-keyword',
-    //       );
-    //     });
+          result = await restaurantService.filterRestaurantsAndDishesByName(
+            'some-keyword',
+          );
+        });
 
-    //     test('it should create createQueryBuilder of restaurantRepository', () => {
-    //       expect(restaurantRepository.createQueryBuilder).toHaveBeenCalledTimes(
-    //         2,
-    //       );
-    //     });
+        test('it should create createQueryBuilder of restaurantRepository', () => {
+          expect(restaurantRepository.createQueryBuilder).toHaveBeenCalledTimes(
+            2,
+          );
+        });
 
-    //     test('it should create createQueryBuilder of restaurantMenuRepository', () => {
-    //       expect(
-    //         restaurantMenuRepository.createQueryBuilder,
-    //       ).toHaveBeenCalledTimes(2);
-    //     });
+        test('it should create createQueryBuilder of restaurantMenuRepository', () => {
+          expect(
+            restaurantMenuRepository.createQueryBuilder,
+          ).toHaveBeenCalledTimes(2);
+        });
 
-    //     test('ok', () => {
-    //       jest.spyOn(typeorm.getManager('default'), 'query');
-    //       // typeorm.getManager().query;
-    //     });
-    //   });
-    // });
+        test('then it should list of restaurants/dishes by keyword', async () => {
+          expect(mockManager.query).toHaveBeenCalled();
+          expect(result).toEqual([searchStub()]);
+        });
+      });
+    });
   });
 });
