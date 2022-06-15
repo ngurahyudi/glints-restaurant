@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ListRestaurantByDateTimeDto } from 'src/common/dto';
 import { MoreLessEnum, OperatorEnum, SortEnum } from '../common/enums';
 import { RestaurantService } from './restaurant.service';
 
@@ -92,15 +93,20 @@ export class RestaurantController {
   ) {
     if (pageSize > 50) pageSize = 50;
 
-    return this.restaurantService.listByDateTime(dateTime, {
-      filterBy,
-      filterOperator,
-      filterValue,
-      sortBy,
-      sortOrder,
-      pageIndex,
-      pageSize,
-    });
+    const queryParams: ListRestaurantByDateTimeDto = {
+      dateTime,
+      dataTableOptions: {
+        filterBy,
+        filterOperator,
+        filterValue,
+        sortBy,
+        sortOrder,
+        pageIndex,
+        pageSize,
+      },
+    };
+
+    return this.restaurantService.listByDateTime(queryParams);
   }
   /*--------------------------------------------------------------------------------*/
 
@@ -142,7 +148,7 @@ export class RestaurantController {
     required: false,
     example: '10.0',
   })
-  listByFilter(
+  listByPriceRange(
     @Query('show', new DefaultValuePipe(10), ParseIntPipe) show: number,
     @Query(
       'operator',
