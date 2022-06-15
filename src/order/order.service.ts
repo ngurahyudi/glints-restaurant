@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { getManager } from 'typeorm';
+import { EntityManager } from 'typeorm';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { RestaurantService } from '../restaurant/restaurant.service';
 import { UserService } from '../user/user.service';
 import { UserPurchaseHistoryService } from '../user-purchase-history/user-purchase-history.service';
@@ -13,6 +14,7 @@ export class OrderService {
     private readonly userService: UserService,
     private readonly userPurchaseHistoryService: UserPurchaseHistoryService,
     private readonly configService: ConfigService,
+    @InjectEntityManager() private manager: EntityManager,
   ) {}
 
   private DATABASE_LOCK_RETRY: number =
@@ -29,58 +31,61 @@ export class OrderService {
    * @returns A promise that resolves to an object with a message property.
    */
   async createOrder(props: OrderDto, retry = 0): Promise<{ message: string }> {
-    const result = await getManager()
-      .transaction(async (entityManager) => {
-        // Get Total amount of purchased dishes
-        const totalAmount: number = props.menus.reduce(
-          (total: number, obj: OrderMenuDto) => {
-            return total + obj.amount;
-          },
-          0,
-        );
+    try {
+      return await this.manager.transaction(
+        async (entityManager: EntityManager) => {
+          // Get Total amount of purchased dishes
+          const totalAmount: number = props.menus.reduce(
+            (total: number, obj: OrderMenuDto) => {
+              return total + obj.amount;
+            },
+            0,
+          );
 
-        await this.restaurantService.updateBalance(
-          props.restaurantId,
-          totalAmount,
-          entityManager,
-        );
+          await this.restaurantService.updateBalance({
+            id: props.restaurantId,
+            totalAmount: totalAmount,
+            entityManager: entityManager,
+          });
 
-        await this.userService.updateBalance(
-          props.userId,
-          totalAmount,
-          entityManager,
-        );
+          await this.userService.updateBalance({
+            id: props.userId,
+            totalAmount: totalAmount,
+            entityManager: entityManager,
+          });
 
-        const purchases: UserPurchaseHistoryDto[] = props.menus.map(
-          (e: OrderMenuDto) => {
-            return {
-              transactionAmount: e.amount,
-              menuId: e.menuId,
-              userId: props.userId,
-              restaurantId: props.restaurantId,
-            };
-          },
-        );
+          const purchases: UserPurchaseHistoryDto[] = props.menus.map(
+            (e: OrderMenuDto) => {
+              return {
+                transactionAmount: e.amount,
+                menuId: e.menuId,
+                userId: props.userId,
+                restaurantId: props.restaurantId,
+              };
+            },
+          );
 
-        await this.userPurchaseHistoryService.create(purchases, entityManager);
+          await this.userPurchaseHistoryService.create(
+            purchases,
+            entityManager,
+          );
 
-        return {
-          message: 'dataSuccessfullySaved',
-        };
-      })
-      .catch(async (error) => {
-        if (error.code === 'ER_LOCK_DEADLOCK') {
-          if (retry >= this.DATABASE_LOCK_RETRY) {
-            throw new InternalServerErrorException('deadLockFound');
-          }
-
-          await new Promise((r) => setTimeout(r, this.DATABASE_WAIT_RETRY));
-          return this.createOrder(props, retry++);
+          return {
+            message: 'dataSuccessfullySaved',
+          };
+        },
+      );
+    } catch (error) {
+      if (error.code === 'ER_LOCK_DEADLOCK') {
+        if (retry >= this.DATABASE_LOCK_RETRY) {
+          throw new InternalServerErrorException('deadLockFound');
         }
 
-        throw error;
-      });
+        await new Promise((r) => setTimeout(r, this.DATABASE_WAIT_RETRY));
+        return this.createOrder(props, retry++);
+      }
 
-    return result;
+      throw error;
+    }
   }
 }
