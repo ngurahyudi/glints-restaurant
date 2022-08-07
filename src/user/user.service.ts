@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UpdateBalanceDto } from '../common/dto';
 import { UserEntity } from '../database/entities';
 
@@ -17,11 +17,11 @@ export class UserService {
       .where({ id })
       .getOne();
 
-    if (!user) throw new UnprocessableEntityException('userNotFound');
+    if (!user) throw new BadRequestException('userNotFound');
 
     // check user balance
     if (user.cashBalance < totalAmount)
-      throw new UnprocessableEntityException('insufficientBalance');
+      throw new BadRequestException('insufficientBalance');
 
     await entityManager.update(UserEntity, id, {
       cashBalance: user.cashBalance - totalAmount,

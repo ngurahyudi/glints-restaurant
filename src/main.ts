@@ -23,13 +23,13 @@ async function bootstrap() {
       transform: true,
     }),
 
-    // use this to override error message to UnprocessableEntityException
+    // use this to override error message to BadRequestException
     // PRODUCTION MODE
     // new ValidationPipe({
     //   transform: true,
     //   disableErrorMessages: false,
     //   exceptionFactory: (errors: ValidationError[]) =>
-    //     new UnprocessableEntityException(),
+    //     new BadRequestException(),
     // }),
   );
 
