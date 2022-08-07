@@ -1,0 +1,34 @@
+@startuml
+
+class restaurant {
+    id: Number
+    name: String
+    cashBalance: Number
+}
+
+class menu {
+    id: Number
+    dishName: String
+    price: Number
+    restaurant_id: Number
+}
+
+class user {
+    id: Number
+    name: String
+    cashBalance: Number
+}
+
+class purchaseHistory {
+    id: Number    
+    transaction_date: Date
+    transaction_amount: Number
+    user_id: Number    
+    menu_id: Number
+}
+
+menu }-- restaurant
+purchaseHistory }-- user
+purchaseHistory }-- menu
+
+@enduml
