@@ -1,5 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
-import { UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UpdateBalanceDto } from '../../common/dto';
 import { UserService } from '../user.service';
@@ -76,7 +76,7 @@ describe('UserService', () => {
         try {
           await userService.updateBalance(params);
         } catch (error) {
-          expect(error).toBeInstanceOf(UnprocessableEntityException);
+          expect(error).toBeInstanceOf(BadRequestException);
           expect(error.message).toBe('userNotFound');
         }
       });
@@ -89,7 +89,7 @@ describe('UserService', () => {
         try {
           await userService.updateBalance(params);
         } catch (error) {
-          expect(error).toBeInstanceOf(UnprocessableEntityException);
+          expect(error).toBeInstanceOf(BadRequestException);
           expect(error.message).toBe('insufficientBalance');
         }
       });

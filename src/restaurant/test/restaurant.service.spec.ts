@@ -13,7 +13,7 @@ import {
 } from '../../common/types';
 import { RestaurantService } from '../restaurant.service';
 import { dishByPriceStub, restaurantStub, searchStub } from './stub';
-import { UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { IDataTable } from '../../common/interfaces';
 import { createMock } from '@golevelup/ts-jest';
 import {
@@ -211,7 +211,7 @@ describe('RestaurantService', () => {
           try {
             await restaurantService.listByDateTime(qryParams);
           } catch (error) {
-            expect(error).toBeInstanceOf(UnprocessableEntityException);
+            expect(error).toBeInstanceOf(BadRequestException);
             expect(error.message).toBe('invalidDateTime');
           }
         });
@@ -336,7 +336,7 @@ describe('RestaurantService', () => {
           try {
             await restaurantService.updateBalance(params);
           } catch (error) {
-            expect(error).toBeInstanceOf(UnprocessableEntityException);
+            expect(error).toBeInstanceOf(BadRequestException);
             expect(error.message).toBe('restaurantNotFound');
           }
         });

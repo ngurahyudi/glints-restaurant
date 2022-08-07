@@ -1,7 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
@@ -36,8 +36,7 @@ export class RestaurantService {
       .where({ id })
       .getOne();
 
-    if (!restaurant)
-      throw new UnprocessableEntityException('restaurantNotFound');
+    if (!restaurant) throw new BadRequestException('restaurantNotFound');
 
     await entityManager.update(RestaurantEntity, id, {
       cashBalance: restaurant.cashBalance + totalAmount,
@@ -56,7 +55,7 @@ export class RestaurantService {
     const dt = moment(queryParams.dateTime);
 
     if (!dt.isValid()) {
-      throw new UnprocessableEntityException('invalidDateTime');
+      throw new BadRequestException('invalidDateTime');
     }
 
     const day: DaysEnum = DaysEnum[dt.format('dddd').toUpperCase()];
@@ -80,6 +79,7 @@ export class RestaurantService {
       if (queryParams.dataTableOptions.filterBy) {
         query = selectQuery(
           query,
+          'restaurant',
           queryParams.dataTableOptions.filterOperator,
           queryParams.dataTableOptions.filterBy,
           queryParams.dataTableOptions.filterValue,
