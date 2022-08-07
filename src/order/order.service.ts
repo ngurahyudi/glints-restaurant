@@ -42,14 +42,14 @@ export class OrderService {
             0,
           );
 
-          await this.restaurantService.updateBalance({
-            id: props.restaurantId,
+          await this.userService.updateBalance({
+            id: props.userId,
             totalAmount: totalAmount,
             entityManager: entityManager,
           });
 
-          await this.userService.updateBalance({
-            id: props.userId,
+          await this.restaurantService.updateBalance({
+            id: props.restaurantId,
             totalAmount: totalAmount,
             entityManager: entityManager,
           });
