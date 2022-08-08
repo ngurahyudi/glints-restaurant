@@ -1,10 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-import {
-  CommonEntity,
-  UserEntity,
-  RestaurantMenuEntity,
-  RestaurantEntity,
-} from '.';
+import { CommonEntity, UserEntity, RestaurantMenuEntity } from '.';
 
 @Entity({ name: 'user_purchase_histories' })
 export class UserPurchaseHistoryEntity extends CommonEntity {
@@ -25,15 +20,6 @@ export class UserPurchaseHistoryEntity extends CommonEntity {
   @ManyToOne(() => UserEntity, (user) => user.purchaseHistories)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
-
-  @Column({ name: 'restaurant_id' })
-  restaurantId: number;
-  @ManyToOne(
-    () => RestaurantEntity,
-    (restaurant) => restaurant.purchaseHistories,
-  )
-  @JoinColumn({ name: 'restaurant_id' })
-  restaurant: RestaurantEntity;
 
   @Column({ name: 'menu_id' })
   menuId: number;

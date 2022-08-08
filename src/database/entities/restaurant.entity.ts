@@ -3,7 +3,6 @@ import {
   CommonEntity,
   RestaurantMenuEntity,
   RestaurantOperatingHoursEntity,
-  UserPurchaseHistoryEntity,
 } from './';
 
 @Entity({ name: 'restaurants' })
@@ -26,16 +25,6 @@ export class RestaurantEntity extends CommonEntity {
     cascade: true,
   })
   menus: RestaurantMenuEntity[];
-
-  @OneToMany(
-    () => UserPurchaseHistoryEntity,
-    (purchaseHistories) => purchaseHistories.restaurant,
-    {
-      eager: true,
-      cascade: true,
-    },
-  )
-  purchaseHistories: UserPurchaseHistoryEntity[];
 
   @OneToMany(
     () => RestaurantOperatingHoursEntity,

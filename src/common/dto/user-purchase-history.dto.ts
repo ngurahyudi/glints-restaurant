@@ -17,10 +17,6 @@ export class UserPurchaseHistoryDto {
   userId?: number;
 
   @IsNumber()
-  @IsOptional()
-  restaurantId?: number;
-
-  @IsNumber()
   @IsNotEmpty()
   menuId: number;
 }

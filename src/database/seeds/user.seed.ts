@@ -45,7 +45,6 @@ export default class UserSeed implements Seeder {
               'YYYY-MM-DD HH:mm:ss',
             ),
           ),
-          restaurantId: menu.restaurantId,
           menuId: menu.id,
         };
 
